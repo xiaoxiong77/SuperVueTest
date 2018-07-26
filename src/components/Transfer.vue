@@ -4,13 +4,29 @@
         <div class="containerBox">
             <div class="transferLeft transferBox">
                 <ul>
-                    <li class="checkedALL" @change="handelLeftCheckedALL">
-                        <input type="checkbox" v-model="leftCheckedALL">
+                    <li class="checkedALL">
+                        <!-- <input type="checkbox" v-model="leftCheckedALL">
+                        <span>全选</span> -->
+                        <div :class="['checkContainer', allItemLeft && 'containerchecked']">
+                            <input 
+                                class="checkItem" 
+                                id="checkAll" 
+                                type="checkbox"
+                                @change="handelLeftCheckedALL" 
+                            />
+                            <label for="checkAll"></label>
+                        </div>
                         <span>全选</span>
                     </li>
-                    <li v-for="item in  data" :key="item.id">
+                    <li v-for="item in data" :key="item.id">
                         <div :class="['checkContainer', item.checked && 'containerchecked']">
-                            <input class="checkItem" :id="item.id" type="checkbox" :value="item.id" @change="getCheck" v-model="checkedLeft"/>
+                            <input 
+                                class="checkItem" 
+                                :id="item.id" 
+                                type="checkbox" 
+                                :value="item.id" 
+                                @change="(e) => getCheck(e,item)" 
+                            />
                             <label :for="item.id"></label>
                         </div>
                         <span>{{item.name}}</span>
@@ -27,12 +43,37 @@
             </div>
             <div class="transferRight transferBox">
                 <ul>
-                    <li class="checkedALL" @change="handelRightCheckedALL">
+                    <!-- <li class="checkedALL" @change="handelRightCheckedALL">
                         <input type="checkbox" v-model="rightCheckedAll">
                         <span>全选</span>
+                    </li> -->
+                    <li class="checkedALL">
+                        <div :class="['checkContainer', allItemRight && 'containerchecked']">
+                            <input 
+                                class="checkItem" 
+                                id="checkAllRight" 
+                                type="checkbox"
+                                @change="handelRightCheckedALL" 
+                            />
+                            <label for="checkAllRight"></label>
+                        </div>
+                        <span>全选</span>
                     </li>
-                    <li v-for="item in  rightData" :key="item.id">
+                    <!-- <li v-for="item in rightData" :key="item.id">
                         <input type="checkbox" :value="item.id" v-model="checkedRight"/>
+                        <span>{{item.name}}</span>
+                    </li> -->
+                     <li v-for="item in rightData" :key="item.id">
+                        <div :class="['checkContainer', item.checked && 'containerchecked']">
+                            <input 
+                                class="checkItem" 
+                                :id="item.id" 
+                                type="checkbox" 
+                                :value="item.id" 
+                                @change="(e) => getCheckRight(e, item)" 
+                            />
+                            <label :for="item.id"></label>
+                        </div>
                         <span>{{item.name}}</span>
                     </li>
                 </ul>
@@ -66,38 +107,71 @@
                 checkedLeft: [],
                 rightData: [],
                 checkedRight: [],
-                leftCheckedALL: false,
-                rightCheckedAll: false
+                allItemLeft: false,
+                allItemRight: false
             }
         },
         mounted() {
             
         },
         methods: {
-            getCheck(e){
-                console.log(this.checkedLeft)
-                if(e.target.value){
-                    this.data = this.data.map(item => {
-                        if(item.id == e.target.value){
-                            console.log(item.id)
-                            item.checked = true;
-                            return item;
-                        }
-                    })
+            getCheck(e, tableItem){
+                let arr = [];
+                this.data.forEach(item => {
+                    if(item.id == e.target.value){
+                        item.checked = !tableItem.checked;
+                    }
+                    arr.push(item);
+                })
+                this.data = arr;
+                
+                if(tableItem.checked){
+                    this.checkedLeft.push(e.target.value);
+                }else{
+                    this.checkedLeft = this.checkedLeft.filter(item => item != tableItem.id);
+                }
+
+                if(this.checkedLeft.length == this.data.length){
+                    this.allItemLeft = true;
+                }else{
+                    this.allItemLeft = false;
+                }
+            },
+            getCheckRight(e, tableItem){
+                let arr = [];
+                this.rightData.forEach(item => {
+                    if(item.id == e.target.value){
+                        item.checked = !tableItem.checked;
+                    }
+                    arr.push(item);
+                })
+                this.rightData = arr;
+                
+                if(tableItem.checked){
+                    this.checkedRight.push(e.target.value);
+                }else{
+                    this.checkedRight = this.checkedRight.filter(item => item != tableItem.id);
+                }
+                
+                if(this.checkedRight.length == this.rightData.length){
+                    this.allItemRight = true;
+                }else{
+                    this.allItemRight = false;
                 }
             },
             handelMoveRight(){
                 this.data.forEach(item => {
                     this.checkedLeft.forEach(checked => {
-                        if(item.id === checked){
+                        if(item.id == checked){
+                            item.checked = false;
                             this.rightData.push(item);
-                            this.data = this.data.filter(dataItem => dataItem.id !== checked);
+                            this.data = this.data.filter(dataItem => dataItem.id != checked);
                         }
                     });
                 });
                 this.checkedLeft = [];
-                this.leftCheckedALL = false;
-                this.rightCheckedAll = false;
+                this.allItemLeft = false;
+                this.allItemRight = false;
             },
             handelMoveLeft(){
                 this.rightData.forEach(item => {
@@ -109,8 +183,8 @@
                    });
                 });
                 this.checkedRight = [];
-                this.leftCheckedALL = false;
-                this.rightCheckedAll = false;
+                this.allItemLeft = false;
+                this.allItemRight = false;
             },
             handelUp(){
                 if(this.checkedRight.length){
@@ -172,34 +246,32 @@
                     }  
                 }
             },
-            handelLeftCheckedALL(){
+            handelLeftCheckedALL(e){
                 if(this.data.length){
-                    if(this.leftCheckedALL){
-                        let arr = [];
-                        this.data.map(item => {
-                            arr.push(item.id)
-                        });
-                        this.checkedLeft = arr;
-                    }else{
-                        this.checkedLeft = [];
-                    }
-                }else{
-                    this.leftCheckedALL = false;
+                    let arr = [];
+                    this.data.forEach(item => {
+                        item.checked = !this.allItemLeft;
+                        arr.push(item.id);
+                    });
+                    this.checkedLeft = arr;
+                    this.allItemLeft = !this.allItemLeft;
+                }
+                if(!this.allItemLeft){
+                    this.checkedLeft = [];
                 }
             },
-            handelRightCheckedALL(){
+            handelRightCheckedALL(e){
                 if(this.rightData.length){
-                    if(this.rightCheckedAll){
-                        let arr = [];
-                        this.rightData.map(item => {
-                            arr.push(item.id)
-                        });
-                        this.checkedRight = arr;
-                    }else{
-                        this.checkedRight = [];
-                    }
-                }else{
-                    this.rightCheckedAll = false;
+                    let arr = [];
+                    this.rightData.forEach(item => {
+                        item.checked = !this.allItemRight;
+                        arr.push(item.id);
+                    });
+                    this.checkedRight = arr;
+                    this.allItemRight = !this.allItemRight;
+                }
+                if(!this.allItemRight){
+                    this.checkedRight = [];
                 }
             }
         }
@@ -259,8 +331,13 @@
                 border: 1px solid #ccc;
                 border-radius: 3px;
             }
+        }
+        .containerchecked {
+            label {
+                background-color: #1890ff;
+                border: 1px solid #1890ff;
+            }
             label:after{
-                opacity: 0;
                 content: '';
                 position: absolute;
                 width: 7px;
@@ -268,7 +345,7 @@
                 background: transparent;
                 top: 3px;
                 left: 3px;
-                border: 2px solid #333;
+                border: 2px solid #fff;
                 border-top: none;
                 border-right: none;
                 -webkit-transform: rotate(-45deg);
@@ -276,9 +353,6 @@
                 -o-transform: rotate(-45deg);
                 -ms-transform: rotate(-45deg);
                 transform: rotate(-45deg);
-            }
-            input[type=checkbox]:checked + label:after {
-                opacity: 1;
             }
         }
     }
